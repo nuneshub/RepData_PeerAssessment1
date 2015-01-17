@@ -11,7 +11,8 @@ output:
 
 ### 1. Setting global options
 
-```{r setoptions}
+
+```r
 library(knitr)
 opts_chunk$set(echo=TRUE)
 ```
@@ -33,7 +34,8 @@ Unzipping data into R working directory if the file does not exist already.
 
 Then loading data into R.
 
-```{r loading}
+
+```r
 zipped <- file.path(getwd(), "activity.zip")
 unzipped <- file.path(getwd(), "activity.csv")
 if (!file.exists(unzipped)) { unzip(zipped) }
@@ -47,7 +49,8 @@ The `interval` column of the data is not continuous, jumping from 55 minutes to 
 
 A new column `datetime` was created in the data set to store the correct date and time.
 
-```{r preprocessing}
+
+```r
 hour <- activity$interval %/% 100
 min <- activity$interval - hour * 100
 datetime <- paste(activity$date, hour, min, sep=" ")
@@ -70,7 +73,8 @@ For this part of the assignment, you can ignore the missing values in the datase
 
 Histogram
 
-```{r histogram}
+
+```r
 stepsDay <- aggregate(steps ~ date, data=activity, FUN=sum, na.action=na.omit)
 
 library(ggplot2)
@@ -83,16 +87,19 @@ gHist <- ggplot(data=stepsDay, aes(x=stepsDay$steps)) +
 print(gHist)
 ```
 
+![plot of chunk histogram](figure/histogram-1.png) 
+
 #### Mean and Median total number of steps taken per day
 
-```{r mean_median}
+
+```r
 stepsDayMean <- format(mean(stepsDay$steps), scientific=FALSE)
 stepsDayMedian <- format(median(stepsDay$steps), scientific=FALSE)
 ```
 
-The mean total number of steps taken per day is `r stepsDayMean`.
+The mean total number of steps taken per day is 10766.19.
 
-The median total number of steps taken per day is `r stepsDayMedian`.
+The median total number of steps taken per day is 10765.
 
 
 
@@ -107,14 +114,16 @@ The median total number of steps taken per day is `r stepsDayMedian`.
 
 To answer this question we need to extract the time from the "datetime" column and create a new "time" column (with present date). This "time" column will be similar to the original "interval" column of the data, but will be continuous and can be used for plotting purposes. As mentioned above the original "interval" column of the data is not continuous and should not be used directly.
 
-```{r timecolumn}
+
+```r
 activity$time <- strftime(activity$datetime, format="%H:%M:%S")
 activity$time <- as.POSIXct(activity$time, format="%H:%M:%S")
 ```
 
 #### Time series plot
 
-```{r TimeSeriesPlot}
+
+```r
 stepsTime <- aggregate(steps ~ time, data=activity, FUN=mean, na.action=na.omit)
 
 library(scales)
@@ -128,9 +137,12 @@ gTs <- ggplot(data=stepsTime, aes(x=time, y=steps)) +
 print(gTs)
 ```
 
+![plot of chunk TimeSeriesPlot](figure/TimeSeriesPlot-1.png) 
+
 #### Five-minute interval corresponding to maximum number of steps
 
-```{r interval}
+
+```r
 maxStepsIdx <- which.max(stepsTime$steps)
 interval1 <- stepsTime[maxStepsIdx, "time"]
 interval1 <- format(interval1, format="%H:%M")
@@ -138,7 +150,7 @@ interval2 <- stepsTime[maxStepsIdx+1, "time"]
 interval2 <- format(interval2, format="%H:%M")
 ```
 
-The 5-minute interval, on average across all the days in the dataset, that contains the maximum number of steps is the interval between `r interval1` and `r interval2`.
+The 5-minute interval, on average across all the days in the dataset, that contains the maximum number of steps is the interval between 08:35 and 08:40.
 
 
 
@@ -164,11 +176,12 @@ calculations or summaries of the data.
 
 #### Total number of missing values
 
-```{r nas}
+
+```r
 Nas <- sum(is.na(activity$steps))
 ```
 
-The total number of missing values is `r Nas`.
+The total number of missing values is 2304.
 
 #### Filling in all of the missing values
 
@@ -178,7 +191,8 @@ Considering the objectives for this assessment, the strategy to input missing va
 
 The new data set is then a copy of the original data, where missing values were replaced with the mean for the corresponding 5-minute interval.
 
-```{r NewDataSet}
+
+```r
 activityNew <- activity
 activityNew$steps[is.na(activityNew$steps)] <- 
         round(tapply(activity$steps,activity$interval,FUN=mean,na.rm=TRUE),
@@ -189,7 +203,8 @@ activityNew$steps[is.na(activityNew$steps)] <-
 
 Histogram for the new data
 
-```{r histogramNew}
+
+```r
 stepsDayNew <- aggregate(steps ~ date, data=activityNew, FUN=sum)
 
 gHisNew <- ggplot(data=stepsDayNew, aes(x=stepsDayNew$steps)) + 
@@ -201,23 +216,26 @@ gHisNew <- ggplot(data=stepsDayNew, aes(x=stepsDayNew$steps)) +
 print(gHisNew)
 ```
 
+![plot of chunk histogramNew](figure/histogramNew-1.png) 
+
 ##### Mean and median total number of steps taken per day
 
-```{r mean_medianNew}
+
+```r
 stepsDayMeanNew <- format(mean(stepsDayNew$steps), scientific=FALSE)
 stepsDayMedianNew <- format(median(stepsDayNew$steps), scientific=FALSE)
 ```
 
-The mean total number of steps taken per day is `r stepsDayMeanNew`.
+The mean total number of steps taken per day is 10765.64.
 
-The median total number of steps taken per day is `r stepsDayMedianNew`.
+The median total number of steps taken per day is 10762.
 
 The Table below shows a comparison with the results from the original data:
 
 |            | Original Data Set  | New Data Set          |
 | :--------- |:------------------:| :--------------------:|
-| **Mean**   | `r stepsDayMean`   | `r stepsDayMeanNew`   |
-| **Median** | `r stepsDayMedian` | `r stepsDayMedianNew` |
+| **Mean**   | 10766.19   | 10765.64   |
+| **Median** | 10765 | 10762 |
 
 
 
@@ -253,7 +271,8 @@ with the filled-in missing values for this part.
 
 A new factor variable is created in the new data set identifying the day type, i.e., "weekday" or "weekend".
 
-```{r newVariable}
+
+```r
 dayType <- function(x) {
         ifelse(weekdays(x) %in% c("Saturday", "Sunday"), "weekend", "weekday")
 }
@@ -263,7 +282,8 @@ activityNew$dayType <- as.factor(sapply(activityNew$date, dayType))
 
 #### Time series plot (panel)
 
-```{r TimeSeriesPlotPanel}
+
+```r
 panelDat <- aggregate(steps ~ time + dayType, data=activityNew, FUN=mean)
 
 gPanel <- ggplot(data=panelDat, aes(x=time, y=steps)) +
@@ -276,6 +296,8 @@ gPanel <- ggplot(data=panelDat, aes(x=time, y=steps)) +
         theme_bw()
 print(gPanel)
 ```
+
+![plot of chunk TimeSeriesPlotPanel](figure/TimeSeriesPlotPanel-1.png) 
 
 We can conclude that there are clear differences in activity patterns between weekdays and weekends.
 
